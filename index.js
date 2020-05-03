@@ -1,3 +1,4 @@
+const kafka = require('kafka-node');
 const mongoose = require('mongoose');
 const Album = require('./models/Album');
 const Photo = require('./models/Photo');
@@ -11,6 +12,51 @@ const app = express();
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Kafka
+try {
+  var Producer = kafka.Producer,
+      Consumer = kafka.Consumer,
+    client = new kafka.KafkaClient({kafkaHost: 'kafka:9092'}),
+    producer = new Producer(client);
+
+  var kafka_topic = "album";
+
+  // var createTopics = [{
+  //   topic: kafka_topic,
+  //   partitions: 1,
+  //   replicationFactor: 1
+  // }]
+
+  producer.on('ready', function () {
+    console.log("Producer is ready to send message!");
+  });
+
+  producer.on('error', function (err) {
+    console.log(err);
+  })
+
+  setTimeout(() => {
+    consumer = new Consumer(
+      client,
+      [
+          { topic: kafka_topic }
+      ]
+    );
+  
+    consumer.on('message', function (message) {
+      console.log(`From Consumer ${JSON.stringify(message)}`);
+    });
+  
+    consumer.on('error', function (e) {
+      console.log(`From Consumer Error ${e}`);
+    });
+  }, 30000)
+
+
+}catch (e) {
+  console.log("Producer refuses to come up!!");
+}
 
 // Connect to MongoDB
 // TODO: expose mogo url as env variable
@@ -31,15 +77,29 @@ app.get('/albums', async (req, res) => {
 });
 
 app.post('/album/create', async (req, res) => {
-  const newAlbum = await new Album({
-    name: req.body.name,
-    createdDate: req.body.createdDate
-  });
+  try {
+    const payloads = [{
+      topic: kafka_topic,
+      messages: `${req.body.name} album created!`,
+      partition: 0
+    }];
+  
+    const newAlbum = await new Album({
+      name: req.body.name,
+      createdDate: req.body.createdDate
+    });
 
-  newAlbum.save();
-  res.json({
-    albums: newAlbum
-  });
+    await newAlbum.save();
+
+    producer.send(payloads, (err, data) => {
+      console.log("payload data!", JSON.stringify(data));
+      res.json({
+        albums: newAlbum
+      });
+    })
+  }catch(e) {
+    console.log("could not create an album!");
+  }
 });
 
 app.delete('/album/:id', async (req, res) => {
