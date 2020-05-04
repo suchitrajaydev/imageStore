@@ -1,14 +1,13 @@
 version: '3'
 services:
   app:
-    container_name: docker-node-mongo
+    container_name: image-store
     restart: always
     build: .
     ports:
       - '3000:3000'
-    links:
-      - mongo
     depends_on:
+      - "mongo"
       - "kafka"
   mongo:
     container_name: mongo
@@ -26,7 +25,7 @@ services:
       - "9092:9092"
     hostname: kafka
     environment:
-      KAFKA_CREATE_TOPICS: "album:1:1" # topic:partition:replicas
+      KAFKA_CREATE_TOPICS: "albumCreate:1:1,albumDelete:1:1" # topic:partition:replicas
       KAFKA_ADVERTISED_HOST_NAME: kafka # docker-machine ip
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_PORT: 9092
