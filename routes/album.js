@@ -27,12 +27,15 @@ try {
   }
 
 // Album services
+
+// get all Albums
 router.get('/', async (req, res) => {
 	res.json({
 		albums: await Album.find()
 	})
 });
 
+// create new Album
 router.post('/create', async (req, res) => {
 	try {
 		const payloads = [{
@@ -59,6 +62,7 @@ router.post('/create', async (req, res) => {
 	}
 });
 
+// delete specific Album
 router.delete('/:id', async (req, res) => {
 	await Album.findById(req.params.id, async (err, album) => {
 		await Photo.remove({

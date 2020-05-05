@@ -6,6 +6,8 @@ const Album = require('../models/Album');
 const Photo = require('../models/Photo');
 
 // Photo Services
+
+// get all photos in an Album
 router.get('/:id', async (req, res) => {
 	res.json({
 		photosInAlbum: await Photo.find({
@@ -14,6 +16,7 @@ router.get('/:id', async (req, res) => {
 	})
 });
 
+// create a photo in an Album
 router.post('/create', async (req, res) => {
 	const newPhoto = await new Photo({
 		name: req.body.name,
@@ -38,6 +41,7 @@ router.post('/create', async (req, res) => {
 	});
 });
 
+// delete photo from an album
 router.delete('/:photoId/:albumId', async (req, res) => {
 	const photo = await Album.findByIdAndUpdate(
 		req.params.albumId, {
